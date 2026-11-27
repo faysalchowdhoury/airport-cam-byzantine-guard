@@ -1,0 +1,325 @@
+\documentclass[journal]{IEEEtran}
+\usepackage[T1]{fontenc}
+\usepackage{newtxtext,newtxmath}
+\usepackage{amsmath,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage{cite}
+
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{proposition}{Proposition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\input{generated/macros.tex}
+
+\begin{document}
+
+\title{Passive-Chain Attestation: Bounded-Degree Visibility Rigidity and Coverage-Weighted Blind-Time Minimization for Airport Surveillance}
+
+\author{S.~M.~Tanvir~Faysal~Alam~Chowdhoury%
+\thanks{Code, data provenance (SHA-256), and all numerical artifacts:
+\url{https://github.com/faysalchowdhoury/airport-cam-byzantine-guard}.}}
+
+\markboth{Preprint}{Chowdhoury: Passive-Chain Attestation for Airport Surveillance}
+
+\maketitle
+
+\begin{abstract}
+International airports cannot treat a compromised camera the way an integrity-first site such as a nuclear plant would.
+Taking cameras offline on suspicion creates blind zones over dense passenger and airside traffic, so the security
+objective is \emph{availability-first}: keep every critical zone watched by at least one camera whose stream is live and
+untampered. We formalize this with a Site-Class-Aware Security Priority Vector (SCSPV) and model $n$ surveillance cameras,
+$k$ of which are Byzantine (through Wi-Fi deauthentication, RTSP saturation, or drone-relayed stream injection), as a
+bounded-degree visibility graph. We prove a Compression-by-Contradiction theorem. A colluding adversary cannot compress a
+fabricated trajectory into its own $k$ views while staying consistent with the healthy views that share the epipolar
+overlap ($p^\top E p'=0$). Detection therefore needs per-zone redundancy $k{+}1$ for ground-plane targets and $k{+}2$ for
+off-plane targets, and masking needs $2k{+}1$ and $2k{+}2$. Every tight instance has an explicit pair of
+indistinguishable worlds, and an exhaustive check of \TheoryCases{} cases has \TheoryMismatch{} mismatches. Because
+cameras covering a common zone form a clique, the bound also caps tolerable collusion at
+$k\le\lfloor\Delta/2\rfloor$ for a visibility graph of maximum degree $\Delta$. On the constructive side, a causal
+spatio-temporal graph neural network (ST-GNN) fuses cross-view epipolar residuals, frame-jitter telemetry and an
+untrusted ADS-B/Remote-ID prior whose influence is provably bounded. Its risk scores drive a mixed-integer linear program
+(MILP) that hands analytics capacity off to healthy overlapping cameras. All experiments use real data: the calibrated
+seven-camera WILDTRACK benchmark, live OpenSky ADS-B state vectors, and OpenStreetMap aerodrome geometry. Across five
+seeds and $k/n\in[0.14,0.43]$, the attestor reaches a frame AUROC of \OursAUROC{} and \OursBlind{} coverage-weighted
+blind minutes per hour, against \BestBaseBlind{} for the best baseline. The geometric core of the attestor runs in
+\LatAttestPninetyfive{}\,ms (p95) per frame on one CPU thread.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Byzantine fault tolerance, multi-view geometry, epipolar constraint, video surveillance security, airport security,
+graph neural networks, mixed-integer programming, ADS-B, Remote ID.
+\end{IEEEkeywords}
+
+\section{Introduction}
+\IEEEPARstart{A}{irport} video surveillance is a cyber-physical system built on commodity IP cameras, wireless backhaul
+and RTSP streaming, and each of these can be degraded without touching the camera. Wi-Fi deauthentication frames force
+bursty loss~\cite{bellardo2003deauth}, flooding an RTSP server saturates its sessions, and a drone hovering near a mast
+can relay or replay a camera's own footage. A compromised edge device can also emit fabricated analytics metadata while
+its pixels look normal~\cite{costin2016iotcam}. Airports add a second channel of untrusted information. ADS-B and the
+FAA Remote~ID rule~\cite{faa2021remoteid} broadcast positions that anyone can receive, and anyone can spoof
+them~\cite{strohmeier2015security}.
+
+The defensive goal depends on the site class. An integrity-first site (zero-passenger nuclear facility, substation)
+prefers to fail closed, which means quarantining a doubtful camera and accepting the blind spot. An airport cannot
+afford that. Every quarantined camera over an apron, gate frontage or check-in hall is a blind zone over thousands of
+people per hour, and every false alarm triggers an operator dispatch that disrupts the terminal. We make this explicit
+with the \emph{Site-Class-Aware Security Priority Vector} (SCSPV), which weights availability, integrity and disruption
+per site class and drives every operating decision in the controller.
+
+This paper asks a question that comes before any detector design. How much cross-camera redundancy is
+\emph{information-theoretically} necessary to attest a zone when up to $k$ cameras collude? It then asks how to spend a
+limited analytics budget so that coverage-weighted blind time stays low. Our contributions are:
+\begin{enumerate}
+\item \textbf{SCSPV and bounded-degree visibility model} (Section~\ref{sec:model}): cameras form a visibility graph
+whose edges are shared fields of view. Its maximum degree $\Delta$ bounds the redundancy any zone can have.
+\item \textbf{Compression-by-Contradiction theorem} (Section~\ref{sec:theory}): tight detection and masking bounds
+$m(n,k)$ for ground-plane and off-plane targets. The off-plane bounds cost one extra witness because the adversary can
+exploit epipolar degeneracy. We also give a probabilistic extension with imperfect honest witnesses and a
+bounded-degree corollary $k\le\lfloor\Delta/2\rfloor$.
+\item \textbf{Constructive attestor} (Section~\ref{sec:method}): a causal ST-GNN over the visibility graph, with no
+physics-informed loss. It uses edge features built from epipolar and homography residuals and gates the ADS-B prior so
+the prior's influence on the logit is provably bounded. An availability-weighted MILP then reallocates analytics slots.
+\item \textbf{Real-data evaluation} (Sections~\ref{sec:data}--\ref{sec:results}): a fail-closed feasibility gate, an
+empirical phase diagram that tests the theorem on real calibrated views, and a five-seed benchmark against three
+baselines under four attack families. The repository publishes a SHA-256 ledger for every byte of data used.
+\end{enumerate}
+
+\section{Related Work}
+\textbf{Byzantine agreement and sensor fusion.} The $n\ge 3k{+}1$ bound for agreement~\cite{pease1980reaching,lamport1982byzantine}
+and Marzullo's fault-tolerant interval fusion~\cite{marzullo1990tolerating} assume every sensor measures the same
+quantity. In secure state estimation~\cite{fawzi2014secure}, recovering the state requires that the system remain
+observable after any $2k$ sensors are removed. Our bounds play the same role for multi-view geometry. A camera sees only
+part of the scene, the redundancy that matters is therefore per zone, and the measurement model is projective, so it
+has degenerate directions that an adversary can exploit (the epipolar ambiguity).
+
+\textbf{Multi-view geometry and detection.} The epipolar constraint and ground-plane homographies are
+classical~\cite{hartley2004multiple}. Multi-camera people detection fuses views through occupancy
+maps~\cite{fleuret2008pom} or learned perspective transforms~\cite{hou2020mvdet}, and WILDTRACK~\cite{chavdarova2018wildtrack}
+is the standard calibrated benchmark. These methods assume honest views, whereas we use cross-view consistency to
+\emph{attest} views.
+
+\textbf{Surveillance and aviation security.} Surveys catalogue CCTV attack surfaces~\cite{costin2016iotcam}
+and the absence of authentication in ADS-B~\cite{strohmeier2015security,costin2016ghost}. OT security guidance~\cite{nist80082}
+treats availability as primary for operational systems, but it does not quantify how much redundancy keeps a zone
+\emph{attestable}.
+
+\textbf{Coverage optimization and ST-GNNs.} Camera placement and stream selection are maximal-covering
+problems~\cite{murray1999coverage,horster2006sensor}, and spatio-temporal GNNs~\cite{yu2018stgcn,gilmer2017mpnn} are
+standard for sensor graphs. Our MILP differs from these in two ways: trust enters as a constraint, and redundancy for
+attestation enters as a second-witness objective.
+
+\section{System and Threat Model}\label{sec:model}
+\subsection{Bounded-degree visibility graph}
+Let $V=\{1,\dots,n\}$ be cameras with calibrated projections $P_c=K_c[R_c\,|\,t_c]$, and let $\mathcal{Z}$ be a partition
+of the monitored ground into zones with criticality weights $w_z\ge 0$, $\sum_z w_z=1$. The coverage set of zone $z$
+is $C(z)=\{c: z \text{ projects inside the image of } c\}$, and its \emph{redundancy} is $r(z)=|C(z)|$.
+\begin{definition}[Visibility graph]
+$G=(V,E)$ with $(i,j)\in E$ iff $C^{-1}(i)\cap C^{-1}(j)\neq\emptyset$ (the two cameras share a zone). Edge weights
+count shared zones, and $\Delta(G)$ is the maximum degree.
+\end{definition}
+
+\subsection{Site-Class-Aware Security Priority Vector}
+\begin{definition}[SCSPV]
+For site class $s$, $\boldsymbol{\pi}_s=(\pi_A,\pi_I,\pi_D)$ on the simplex weights availability (coverage-weighted
+blind minutes $\mathcal{B}$), integrity (deceived minutes $\mathcal{I}$: zones whose only trusted coverage is a
+compromised stream) and disruption ($\mathcal{D}$: false-alarm dispatches plus honest-camera quarantine minutes). The
+operating loss is $\mathcal{L}_s=\pi_A\mathcal{B}+\pi_I\mathcal{I}+\pi_D\mathcal{D}$.
+\end{definition}
+We use $\boldsymbol{\pi}_{\text{airport}}=(0.55,0.30,0.15)$ and, for contrast, $\boldsymbol{\pi}_{\text{nuclear}}=(0.15,0.70,0.15)$.
+The vector sets the decision threshold (chosen on validation episodes) and the MILP weights. It is a policy input, not
+something learned from data.
+
+\subsection{Adversary}
+Up to $k$ cameras are Byzantine during an attack window. The adversary knows all calibrations, and its cameras may
+collude. It may: (i) \emph{replay}, re-injecting the camera's own earlier frames through a drone-borne relay that
+buffers to hide the added path delay; (ii) \emph{deauthenticate}, causing Gilbert--Elliott burst loss~\cite{gilbert1960capacity}
+and re-association spikes; (iii) \emph{saturate RTSP}, producing latency ramps, jitter, freezes and drops; (iv)
+\emph{fabricate} analytics metadata, inserting a phantom trajectory that is geometrically consistent across all
+colluding views, placed where the fewest honest cameras can see it, while erasing a real person. ADS-B/Remote-ID
+inputs are untrusted throughout. Honest cameras report their real observations, which include real occlusions and
+annotation noise.
+
+\section{Compression-by-Contradiction Bounds}\label{sec:theory}
+Fix a target hypothesis $X$ (a ground point, or a 3-D point for off-plane objects such as heads or low-altitude drones).
+Camera $c\in C(X)$ \emph{supports} $X$ if its report is geometrically consistent with $X$. On the ground plane, the
+homography $H_c$ is invertible, so an honest report supports exactly one ground point. Off the plane, an honest report
+pins down only a ray, and every $X'$ on that ray satisfies the epipolar constraint $p^\top E p'=0$ with the report.
+\begin{definition}[Detection and masking]
+An attestor \emph{detects} at redundancy $r$ if, for every Byzantine set $B\subseteq C(X)$ with $|B|\le k$ and every
+report strategy, any fabricated hypothesis is contradicted by an honest witness. It \emph{masks} if the true hypothesis
+strictly out-supports every alternative.
+\end{definition}
+
+\begin{lemma}[Rigidity of a healthy view]\label{lem:rigid}
+If $H_c$ is non-singular, an honest ground-plane report supports exactly one ground hypothesis. For two honest views
+$i,j$ with non-parallel rays and baseline $t_{ij}\neq 0$, the pair supports at most one 3-D point.
+\end{lemma}
+\begin{proof}
+The first claim follows because $H_c^{-1}$ is a bijection of the projective plane. For the second, the back-projected
+rays of the two reports intersect in at most one point unless they coincide. Coinciding rays would put both camera
+centres on the same line, which contradicts non-parallel rays with $t_{ij}\neq 0$~\cite{hartley2004multiple}.
+\end{proof}
+
+\begin{theorem}[Compression-by-Contradiction]\label{thm:main}
+Let $r=|C(X)|$ and $k\ge 1$. On the ground plane, detection is possible iff $r\ge k{+}1$ and masking iff $r\ge 2k{+}1$.
+Off the plane, with an adversary free to place fabrications on an honest camera's ray, detection is possible iff
+$r\ge k{+}2$ and masking iff $r\ge 2k{+}2$.
+\end{theorem}
+\begin{proof}
+\emph{Sufficiency (ground).} Suppose $r\ge k{+}1$. Then at least one honest witness $h$ remains. By
+Lemma~\ref{lem:rigid}, $h$ supports only the truth, so it contradicts any fabrication. Suppose $r\ge 2k{+}1$. The truth
+has at least $r-k\ge k{+}1$ supporters, while any alternative has at most $k$, the Byzantine ones.
+
+\emph{Sufficiency (off-plane).} A fabrication $X'$ can be supported by at most one honest camera $h_0$, the one whose
+ray it lies on. If two honest cameras supported $X'$ and both also supported the truth $X\neq X'$, then
+Lemma~\ref{lem:rigid} would be violated. So with $r\ge k{+}2$ at least one honest non-degenerate witness contradicts
+$X'$. Suppose $r\ge 2k{+}2$. Then $X$ has at least $r-k\ge k{+}2$ supporters, including $h_0$, while $X'$ has at most
+$k{+}1$.
+
+\emph{Necessity: the compression contradiction.} Suppose $r=2k$ on the ground plane. Split $C(X)$ into halves $B_0,B_1$
+of size $k$. In world $W_0$ the truth is $X$, and $B_0$ is Byzantine and reports $X'$. In world $W_1$ the truth is $X'$,
+and $B_1$ is Byzantine and reports $X$. In both worlds every camera in $B_0$ reports $X'$ and every camera in $B_1$
+reports $X$. The report vectors are identical, so no rule can mask. Off the plane with $r=2k{+}1$, use the same
+construction on $C(X)\setminus\{h_0\}$, with $h_0$ reporting the shared ray in both worlds. For detection at $r=k$ (or
+$k{+}1$ off the plane), let every non-degenerate witness be Byzantine. The fabrication is then supported by every
+report, and nothing contradicts it.
+
+The name reflects the following. A trajectory observed by $r$ cameras has $2r$ image measurements for 2 ground degrees
+of freedom, a redundant code. To pass a fabricated trajectory as real, the adversary must make the code consistent
+with fewer independent witnesses, i.e., \emph{compress} it into its own $k$ views (plus $h_0$ off the plane). The
+compression succeeds exactly when the honest remainder is too small to contradict it.
+\end{proof}
+
+\begin{corollary}[Bounded-degree visibility rigidity]\label{cor:degree}
+Every $C(z)$ is a clique in $G$, so $r(z)\le\omega(G)\le\Delta(G)+1$. Ground-plane masking of any zone therefore
+requires $k\le\lfloor\Delta/2\rfloor$, and off-plane masking requires $k\le\lfloor(\Delta-1)/2\rfloor$. The minimum
+redundancy is $m(n,k)=2k{+}1$ when $2k{+}1\le\min(n,\Delta{+}1)$ and is infeasible otherwise.
+\end{corollary}
+
+\begin{proposition}[Imperfect honest witnesses]\label{prop:prob}
+If each honest non-degenerate witness independently contradicts a fabrication with probability $p$, the miss
+probability is $(1-p)^{r-k-\mathbb{1}[\text{off}]}$. A target miss rate $\delta$ is therefore met by
+$m=k+\mathbb{1}[\text{off}]+\lceil\log\delta/\log(1-p)\rceil$.
+\end{proposition}
+
+\begin{proposition}[Blind-time decomposition]\label{prop:blind}
+Let a compromised camera be quarantined $L$ seconds after the attack begins. Suppose the hand-off restores coverage to
+every zone that keeps at least one honest covering camera within the analytics budget. Then the coverage-weighted
+blind time of a window of length $T$ satisfies
+$\mathcal{B}\le L\sum_{z:C(z)\cap B\neq\emptyset} w_z + T\sum_{z:C(z)\subseteq B} w_z$ (plus benign outages).
+\end{proposition}
+\begin{proof}
+A zone with an honest covering camera stops being blind once hand-off occurs, at most $L$ after onset. A zone covered
+only by $B$ is blind for the whole window. Summing the weighted durations gives the bound.
+\end{proof}
+
+\begin{remark}[Availability-first vs.\ integrity-first]
+Theorem~\ref{thm:main} explains why the two site classes demand different redundancy. An integrity-first site must
+\emph{mask}, which needs $2k{+}1$. An availability-first site only needs to \emph{detect}, which needs $k{+}1$, and then
+hand off. On the same camera budget, the airport can therefore tolerate about twice as many colluders per zone.
+Proposition~\ref{prop:blind} then makes detection latency $L$ the quantity to minimize.
+\end{remark}
+
+Table~\ref{tab:phase} summarizes the exhaustive check in \texttt{theory/quorum\_bound.py}. It enumerates every Byzantine
+set and every report strategy for $r\le 9$, $k\le 4$ and both geometries, \TheoryCases{} cases in total, and finds
+\TheoryMismatch{} mismatches with the closed forms.
+
+\section{Passive-Chain Attestor and Optical Hand-off}\label{sec:method}
+\subsection{Cross-view evidence}
+At frame $t$, each camera reports detections (foot and head keypoints). For every overlapping pair $(i,j)$, foot points
+of $i$ that lie inside $j$'s field of view are mapped to the ground through $H_i^{-1}$ and matched to $j$'s with the
+Hungarian algorithm (1\,m gate). This yields the inconsistency rates $\iota_{ij},\iota_{ji}$ (fraction left unmatched)
+and the mean ground residual. Matched head points give the symmetric epipolar distance under
+$F_{ij}=K_j^{-\top}[t_{ij}]_\times R_{ij}K_i^{-1}$. Each camera also contributes its own temporal evidence:
+Horn--Schunck optical flow~\cite{horn1981determining} between consecutive delivered frames (flow magnitude, photometric
+residual after warping, raw difference, freeze flag) and transport telemetry (arrival-latency $z$-score against a
+warm-up baseline, jitter, gap length).
+
+\subsection{ST-GNN attestor}
+Node features $x_c^t\in\mathbb{R}^{15}$ are encoded and passed through a GRU cell, which keeps the model causal. Two
+edge-conditioned message-passing layers follow, of the form
+$m_{ij}=\phi([h_i,h_j,e_{ij}])\,\sigma(\psi(e_{ij}))\,a_{ij}$ and $h_i\leftarrow\mathrm{LN}(h_i+\rho([h_i,\overline{m}_i]))$,
+where $e_{ij}$ holds the pairwise residuals. A linear head outputs the logit $\ell_c^t$. The model has \GnnParams{}
+parameters and no physics-informed loss.
+
+\textbf{Bounded untrusted prior.} The ADS-B/Remote-ID activity $a^t$ never enters the encoder. It is added as
+$\ell_c^t\mathrel{+}=\beta\tanh(\alpha a^t+b)$, so for any spoofed prior $|\Delta\ell|\le 2\beta$, with $\beta=\SpoofBeta$.
+In the MILP the prior modulates zone weights only within $[1,1+\beta]$. Neither channel can create or erase geometric
+evidence.
+
+\subsection{Availability-weighted MILP hand-off}
+Given risk $\hat p_c$, quarantine flags $q_c$ (hysteresis: on after 2 frames above $\theta$, off after 6 below) and an
+analytics budget of $B$ streams, we solve
+\begin{align}
+\max_{x,y,u}\;& \textstyle\sum_z w_z y_z+\gamma\sum_z w_z u_z-\lambda\sum_c \hat p_c x_c \nonumber\\
+\text{s.t. }& y_z\le \textstyle\sum_c a_{cz}(1-q_c)x_c,\quad y_z+u_z\le \textstyle\sum_c a_{cz}(1-q_c)x_c,\nonumber\\
+& \textstyle\sum_c x_c\le B,\; x\in\{0,1\}^n,\; y\in\{0,1\}^{|\mathcal Z|},\; u\in[0,1]^{|\mathcal Z|},\label{eq:milp}
+\end{align}
+with $\gamma=0.25$ and $\lambda=0.02$, using SciPy's HiGHS interface~\cite{huangfu2018highs}. Zones with identical
+coverage signatures are merged and their weights summed. This is exact because their constraints coincide, and it
+shrinks WILDTRACK from 432 zones to 26.
+
+\section{Data, Gate~0 and Protocol}\label{sec:data}
+\textbf{Real data only.} (i) WILDTRACK~\cite{chavdarova2018wildtrack}: seven synchronized, calibrated, overlapping
+1920$\times$1080 cameras with 400 annotated frames at 2\,fps. The 6.8\,GB archive was read by HTTP range requests,
+including a repair of 32-bit-wrapped ZIP offsets, and each of the 2,800 frames was SHA-256 hashed before 4$\times$
+down-sampling. (ii) OpenSky Network~\cite{schafer2014opensky}: 90 snapshots of live ADS-B state vectors at 10\,s
+intervals around JFK, ATL and DCA, each raw response hashed. (iii) OpenStreetMap~\cite{osm}: aeroway runway, taxiway,
+apron, terminal and stand geometry for the same airports. All hashes, URLs and licences are in
+\texttt{artifacts/data\_provenance.json}. No frames, detections or aircraft coordinates were synthesized.
+
+\textbf{What is emulated, and how.} Attacks re-route real content (a camera's own past frames, freezes, drops) or tamper
+with metadata (Section~\ref{sec:model}). WILDTRACK carries no network telemetry, so arrival latency and jitter follow
+standard channel models: Gaussian jitter with per-camera baselines, Gilbert--Elliott loss~\cite{gilbert1960capacity},
+and a saturation ramp. Benign congestion episodes on honest cameras, which occur in 35\% of episodes, create
+false-alarm pressure. ADS-B spoofing is emulated by \emph{transplanting} one airport's real traffic onto another, so no
+coordinates are invented. Detections are the dataset's annotated boxes. This isolates attestation from detector error
+but keeps real occlusion and labelling noise.
+
+\textbf{Gate~0.} Before any experiment, a fail-closed gate checks four things, and the pipeline returns
+\texttt{NOT\_EVALUABLE} on any failure. (a) All homographies are invertible. (b) Annotated ground positions re-project
+onto the box foot points, with median error between \GzeroReprojMin{} and \GzeroReprojMax{}\,px across cameras
+(\GzeroBoxes{} boxes). (c) Cross-view homography transfer of the same person has median error \GzeroTransferMed{}\,cm
+and 90th percentile \GzeroTransferPninety{}\,cm (\GzeroPairs{} pairs). (d) The visibility graph is connected, with
+$\Delta=\GzeroMaxDegree$. The gate passed.
+
+\textbf{Protocol.} Seeds $\{42,101,202,303,404\}$. Camera subsets $n'\in\{5,6,7\}$ with $k\in\{1,2,3\}$ give
+$k/n'\in\{0.14,0.17,0.20,0.29,0.33,0.40,0.43\}$. Training and validation episodes use frames 0--199, and test episodes
+use the temporally disjoint frames 200--399: 7 configurations $\times$ 5 attack types $\times$ 3 episodes per seed. The
+analytics budget is $B=\lceil 0.4n'\rceil$. Thresholds minimize the airport SCSPV loss on validation episodes. The
+baselines are: (1) \emph{single-camera analytics}, which uses own-stream telemetry and flow with greedy hand-off; (2)
+\emph{naive majority vote}, which flags a camera if most overlapping neighbours disagree, with greedy hand-off; and (3)
+\emph{static redundancy}, a pre-provisioned two-witness set with majority voting inside it and no runtime hand-off.
+
+\section{Results}\label{sec:results}
+\input{generated/results_text.tex}
+
+\section{Limitations}
+Detections are annotated boxes rather than detector outputs, so the measured benefit concerns attestation, not
+detection. Network telemetry is modelled, not recorded, and the airport case study uses a hypothetical camera layout
+because real layouts are not public. The ADS-B window is a single overnight capture, with sparse traffic and no DCA
+movements during its curfew, so the prior's benefit is under-tested by design. Finally, WILDTRACK is a 12$\times$36\,m
+plaza with seven cameras. The bounds in Section~\ref{sec:theory} do not depend on scale, but the learned attestor's
+numbers should be re-measured on larger deployments.
+
+\section{Conclusion}
+Availability-first airport surveillance needs a principled answer to how much redundancy is enough. Each zone needs
+$k{+}1$ healthy witnesses to \emph{detect} collusion ($k{+}2$ off the ground plane), while masking needs $2k{+}1$
+($2k{+}2$), and a bounded-degree visibility graph caps both. On real calibrated views, the theorem's phase boundary
+appears where predicted for ground targets and one witness later for crowded off-plane targets, as the probabilistic
+extension anticipates. Combining a geometry-aware ST-GNN with an availability-weighted MILP turns the theory into a
+controller whose untrusted inputs have provably bounded influence.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

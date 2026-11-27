@@ -1,0 +1,344 @@
+{
+  "ground": {
+    "1,1": {
+      "n": 106,
+      "detect_rate": 0.0,
+      "mask_rate": 0.0,
+      "r": 1,
+      "k": 1,
+      "detect_theory": false,
+      "mask_theory": false
+    },
+    "1,2": {
+      "n": 102,
+      "detect_rate": 0.0,
+      "mask_rate": 0.0,
+      "r": 1,
+      "k": 2,
+      "detect_theory": false,
+      "mask_theory": false
+    },
+    "1,3": {
+      "n": 114,
+      "detect_rate": 0.0,
+      "mask_rate": 0.0,
+      "r": 1,
+      "k": 3,
+      "detect_theory": false,
+      "mask_theory": false
+    },
+    "2,1": {
+      "n": 1186,
+      "detect_rate": 0.9924114671163575,
+      "mask_rate": 0.0,
+      "r": 2,
+      "k": 1,
+      "detect_theory": true,
+      "mask_theory": false
+    },
+    "2,2": {
+      "n": 1139,
+      "detect_rate": 0.0,
+      "mask_rate": 0.0,
+      "r": 2,
+      "k": 2,
+      "detect_theory": false,
+      "mask_theory": false
+    },
+    "2,3": {
+      "n": 1108,
+      "detect_rate": 0.0,
+      "mask_rate": 0.0,
+      "r": 2,
+      "k": 3,
+      "detect_theory": false,
+      "mask_theory": false
+    },
+    "3,1": {
+      "n": 1068,
+      "detect_rate": 0.9990636704119851,
+      "mask_rate": 0.9925093632958801,
+      "r": 3,
+      "k": 1,
+      "detect_theory": true,
+      "mask_theory": true
+    },
+    "3,2": {
+      "n": 1053,
+      "detect_rate": 0.9895536562203229,
+      "mask_rate": 0.0,
+      "r": 3,
+      "k": 2,
+      "detect_theory": true,
+      "mask_theory": false
+    },
+    "3,3": {
+      "n": 1028,
+      "detect_rate": 0.0,
+      "mask_rate": 0.0,
+      "r": 3,
+      "k": 3,
+      "detect_theory": false,
+      "mask_theory": false
+    },
+    "4,1": {
+      "n": 475,
+      "detect_rate": 1.0,
+      "mask_rate": 0.991578947368421,
+      "r": 4,
+      "k": 1,
+      "detect_theory": true,
+      "mask_theory": true
+    },
+    "4,2": {
+      "n": 463,
+      "detect_rate": 1.0,
+      "mask_rate": 0.0,
+      "r": 4,
+      "k": 2,
+      "detect_theory": true,
+      "mask_theory": false
+    },
+    "4,3": {
+      "n": 495,
+      "detect_rate": 0.9919191919191919,
+      "mask_rate": 0.0,
+      "r": 4,
+      "k": 3,
+      "detect_theory": true,
+      "mask_theory": false
+    },
+    "5,1": {
+      "n": 608,
+      "detect_rate": 1.0,
+      "mask_rate": 0.9950657894736842,
+      "r": 5,
+      "k": 1,
+      "detect_theory": true,
+      "mask_theory": true
+    },
+    "5,2": {
+      "n": 654,
+      "detect_rate": 1.0,
+      "mask_rate": 0.9862385321100917,
+      "r": 5,
+      "k": 2,
+      "detect_theory": true,
+      "mask_theory": true
+    },
+    "5,3": {
+      "n": 669,
+      "detect_rate": 0.9940209267563528,
+      "mask_rate": 0.0,
+      "r": 5,
+      "k": 3,
+      "detect_theory": true,
+      "mask_theory": false
+    },
+    "6,1": {
+      "n": 523,
+      "detect_rate": 1.0,
+      "mask_rate": 0.9808795411089866,
+      "r": 6,
+      "k": 1,
+      "detect_theory": true,
+      "mask_theory": true
+    },
+    "6,2": {
+      "n": 539,
+      "detect_rate": 1.0,
+      "mask_rate": 0.9591836734693877,
+      "r": 6,
+      "k": 2,
+      "detect_theory": true,
+      "mask_theory": true
+    },
+    "6,3": {
+      "n": 543,
+      "detect_rate": 1.0,
+      "mask_rate": 0.0,
+      "r": 6,
+      "k": 3,
+      "detect_theory": true,
+      "mask_theory": false
+    },
+    "7,1": {
+      "n": 34,
+      "detect_rate": 1.0,
+      "mask_rate": 0.9705882352941176,
+      "r": 7,
+      "k": 1,
+      "detect_theory": true,
+      "mask_theory": true
+    },
+    "7,2": {
+      "n": 50,
+      "detect_rate": 1.0,
+      "mask_rate": 1.0,
+      "r": 7,
+      "k": 2,
+      "detect_theory": true,
+      "mask_theory": true
+    },
+    "7,3": {
+      "n": 43,
+      "detect_rate": 1.0,
+      "mask_rate": 0.9767441860465116,
+      "r": 7,
+      "k": 3,
+      "detect_theory": true,
+      "mask_theory": true
+    }
+  },
+  "offplane": {
+    "2,1": {
+      "n": 140,
+      "detect_rate": 0.0,
+      "mask_rate": 0.0,
+      "r": 2,
+      "k": 1,
+      "detect_theory": false,
+      "mask_theory": false
+    },
+    "2,2": {
+      "n": 131,
+      "detect_rate": 0.0,
+      "mask_rate": 0.0,
+      "r": 2,
+      "k": 2,
+      "detect_theory": false,
+      "mask_theory": false
+    },
+    "2,3": {
+      "n": 161,
+      "detect_rate": 0.0,
+      "mask_rate": 0.0,
+      "r": 2,
+      "k": 3,
+      "detect_theory": false,
+      "mask_theory": false
+    },
+    "3,1": {
+      "n": 910,
+      "detect_rate": 0.7923076923076923,
+      "mask_rate": 0.0,
+      "r": 3,
+      "k": 1,
+      "detect_theory": true,
+      "mask_theory": false
+    },
+    "3,2": {
+      "n": 905,
+      "detect_rate": 0.0,
+      "mask_rate": 0.0,
+      "r": 3,
+      "k": 2,
+      "detect_theory": false,
+      "mask_theory": false
+    },
+    "3,3": {
+      "n": 896,
+      "detect_rate": 0.0,
+      "mask_rate": 0.0,
+      "r": 3,
+      "k": 3,
+      "detect_theory": false,
+      "mask_theory": false
+    },
+    "4,1": {
+      "n": 693,
+      "detect_rate": 0.974025974025974,
+      "mask_rate": 0.7431457431457431,
+      "r": 4,
+      "k": 1,
+      "detect_theory": true,
+      "mask_theory": true
+    },
+    "4,2": {
+      "n": 716,
+      "detect_rate": 0.8589385474860335,
+      "mask_rate": 0.0,
+      "r": 4,
+      "k": 2,
+      "detect_theory": true,
+      "mask_theory": false
+    },
+    "4,3": {
+      "n": 676,
+      "detect_rate": 0.0,
+      "mask_rate": 0.0,
+      "r": 4,
+      "k": 3,
+      "detect_theory": false,
+      "mask_theory": false
+    },
+    "5,1": {
+      "n": 1491,
+      "detect_rate": 0.9966465459423206,
+      "mask_rate": 0.6867873910127431,
+      "r": 5,
+      "k": 1,
+      "detect_theory": true,
+      "mask_theory": true
+    },
+    "5,2": {
+      "n": 1480,
+      "detect_rate": 0.981081081081081,
+      "mask_rate": 0.0,
+      "r": 5,
+      "k": 2,
+      "detect_theory": true,
+      "mask_theory": false
+    },
+    "5,3": {
+      "n": 1520,
+      "detect_rate": 0.8671052631578947,
+      "mask_rate": 0.0,
+      "r": 5,
+      "k": 3,
+      "detect_theory": true,
+      "mask_theory": false
+    },
+    "6,1": {
+      "n": 190,
+      "detect_rate": 1.0,
+      "mask_rate": 0.9421052631578948,
+      "r": 6,
+      "k": 1,
+      "detect_theory": true,
+      "mask_theory": true
+    },
+    "6,2": {
+      "n": 193,
+      "detect_rate": 0.9896373056994818,
+      "mask_rate": 0.8341968911917098,
+      "r": 6,
+      "k": 2,
+      "detect_theory": true,
+      "mask_theory": true
+    },
+    "6,3": {
+      "n": 177,
+      "detect_rate": 0.9830508474576272,
+      "mask_rate": 0.0,
+      "r": 6,
+      "k": 3,
+      "detect_theory": true,
+      "mask_theory": false
+    }
+  },
+  "witness": {
+    "ground": 0.9924921167225587,
+    "offplane": 0.8723092692927222
+  },
+  "ground_agreement": {
+    "detect": 1.0,
+    "mask": 1.0,
+    "cells": 21
+  },
+  "offplane_agreement": {
+    "detect": 0.8,
+    "mask": 0.8,
+    "cells": 15
+  }
+}
