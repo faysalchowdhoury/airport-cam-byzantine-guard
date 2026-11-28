@@ -5,6 +5,9 @@
 This repository holds the research code, real-data pipeline, and IEEEtran manuscript (`paper/main.pdf`) for an
 availability-first defence of airport camera networks against Byzantine (compromised or degraded) cameras.
 
+> Resuming work? Read [`docs/WORK_HISTORY.md`](docs/WORK_HISTORY.md) first. It covers the original spec, the
+> timeline, the current results, the open items and how to restart.
+
 * **Theory** (`theory/`): the *Compression-by-Contradiction* theorem gives the per-zone redundancy needed when `k`
   cameras collude:
 
