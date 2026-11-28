@@ -72,7 +72,22 @@ used in the paper are recorded in `artifacts/data_provenance.json`.
 
 ## Headline results
 
-All headline numbers are in `artifacts/results_summary.json`, and the paper's tables are generated from that file.
+Test episodes, mean ± std over five seeds (`artifacts/results_summary.json`; the paper's tables are generated from it):
+
+| Method | Blind min/h ↓ | Deceived min/h ↓ | False alarms/h ↓ | Frame AUROC ↑ |
+|---|---|---|---|---|
+| Single-camera analytics | 3.36 ± 0.26 | 1.17 ± 0.22 | 238.6 ± 10.0 | 0.730 ± 0.008 |
+| Naive majority vote | 1.91 ± 0.18 | 1.06 ± 0.15 | 56.7 ± 1.4 | 0.648 ± 0.009 |
+| Static redundancy | 3.04 ± 0.28 | 0.85 ± 0.15 | **12.5 ± 1.9** | 0.599 ± 0.008 |
+| **SCSPV attestor + MILP** | **1.79 ± 0.05** | **0.76 ± 0.09** | 37.0 ± 28.2 | **0.852 ± 0.010** |
+
+* Ground-plane phase boundary on real views matches the theorem in every cell. Off-plane it appears one witness later,
+  as the probabilistic extension predicts for crowded scenes.
+* The attestor (geometry + ST-GNN) runs in 12.0 ms p95 per frame for 7 cameras on one CPU thread. Optical flow
+  (214 ms p95 per camera on CPU) and uncached MILP solves (50 ms p95) are outside that budget.
+* Known weaknesses, reported in the paper: false alarms vary widely across seeds (the selected threshold sits at the
+  edge of the grid), and coordinated metadata fabrication is detected in only 13% of episodes.
+
 See `paper/main.pdf`, Section VII.
 
 ## Licence

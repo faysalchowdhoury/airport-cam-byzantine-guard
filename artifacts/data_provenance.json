@@ -356,6 +356,15 @@
       "query_template": "[out:json][timeout:180];\n(\n  way[\"aeroway\"~\"^(runway|taxiway|apron|terminal|hangar|gate|parking_position)$\"]({s},{w},{n},{e});\n  node[\"aeroway\"~\"^(gate|parking_position)$\"]({s},{w},{n},{e});\n);\nout geom;",
       "retrieved_utc": "2026-11-27T03:59:36Z"
     },
+    "wildtrack_frames": {
+      "license": "EPFL CVLab research-use terms (see landing page); not redistributed in this repository",
+      "manifest": "data\\wildtrack\\frame_sha256_manifest.json",
+      "manifest_sha256": "65d63e3a40e3873ebaaa7ef4397cd8baee1e22462349f576ddd7c31685f7d035",
+      "n_frames_per_camera": 400,
+      "name": "WILDTRACK Image_subsets (C1..C7), decoded and 4x box-downsampled to 480x270 grayscale",
+      "retrieved_utc": "2026-11-28T03:04:35Z",
+      "url": "https://documents.epfl.ch/groups/c/cv/cvlab-unit/www/data/Wildtrack/Wildtrack_dataset_full.zip"
+    },
     "wildtrack_metadata": {
       "access_method": "HTTP Range requests on the remote ZIP (only required members fetched)",
       "archive_size_bytes": 6807496358,
@@ -787,7 +796,7 @@
         "Wildtrack_dataset/calibrations/intrinsic_zero/intr_IDIAP3.xml": "299118eb9c10d196a66c3aa66023069c8ce7533162942d7819f69824f6361ac7"
       },
       "name": "WILDTRACK multi-camera pedestrian dataset",
-      "retrieved_utc": "2026-11-27T03:56:57Z",
+      "retrieved_utc": "2026-11-28T01:06:24Z",
       "url": "https://documents.epfl.ch/groups/c/cv/cvlab-unit/www/data/Wildtrack/Wildtrack_dataset_full.zip"
     }
   }

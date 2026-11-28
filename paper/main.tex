@@ -1,10 +1,11 @@
 \documentclass[journal]{IEEEtran}
 \usepackage[T1]{fontenc}
-\usepackage{newtxtext,newtxmath}
 \usepackage{amsmath,amsthm}
+\usepackage{newtxtext,newtxmath}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{multirow}
+\newcommand{\makecell}[1]{\begin{tabular}[c]{@{}c@{}}#1\end{tabular}}
 \usepackage{xcolor}
 \usepackage{url}
 \usepackage[hidelinks]{hyperref}
@@ -19,6 +20,9 @@
 \newtheorem{remark}{Remark}
 
 \input{generated/macros.tex}
+\graphicspath{{../figures/}}
+% primitive \input: LaTeX's \input is not expandable and breaks \bottomrule inside tabular
+\makeatletter\newcommand{\inputtable}[1]{\@@input #1 }\makeatother
 
 \begin{document}
 
@@ -116,6 +120,16 @@ treats availability as primary for operational systems, but it does not quantify
 problems~\cite{murray1999coverage,horster2006sensor}, and spatio-temporal GNNs~\cite{yu2018stgcn,gilmer2017mpnn} are
 standard for sensor graphs. Our MILP differs from these in two ways: trust enters as a constraint, and redundancy for
 attestation enters as a second-witness objective.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{fig1_airport_architecture.png}
+\caption{Passive-Chain Attestation pipeline. Top: the camera visibility graph (real WILDTRACK camera centres, edge
+width proportional to shared zones) and its streams. Middle: untrusted ADS-B/Remote-ID inputs, which reach the
+attestor and the MILP only through a bounded gate (dashed). Bottom: cross-view epipolar evidence feeds the causal
+ST-GNN, whose risk scores drive the quorum check and the availability-weighted MILP that re-allocates streams.}
+\label{fig:arch}
+\end{figure*}
 
 \section{System and Threat Model}\label{sec:model}
 \subsection{Bounded-degree visibility graph}
@@ -229,9 +243,9 @@ hand off. On the same camera budget, the airport can therefore tolerate about tw
 Proposition~\ref{prop:blind} then makes detection latency $L$ the quantity to minimize.
 \end{remark}
 
-Table~\ref{tab:phase} summarizes the exhaustive check in \texttt{theory/quorum\_bound.py}. It enumerates every Byzantine
-set and every report strategy for $r\le 9$, $k\le 4$ and both geometries, \TheoryCases{} cases in total, and finds
-\TheoryMismatch{} mismatches with the closed forms.
+The exhaustive check in \texttt{theory/quorum\_bound.py} enumerates every Byzantine set and every report strategy for
+$r\le 9$, $k\le 4$ and both geometries, \TheoryCases{} cases in total, and finds \TheoryMismatch{} mismatches with the
+closed forms. Section~\ref{sec:results} (Table~\ref{tab:phase}) tests the same bounds on real calibrated views.
 
 \section{Passive-Chain Attestor and Optical Hand-off}\label{sec:method}
 \subsection{Cross-view evidence}
@@ -301,13 +315,16 @@ baselines are: (1) \emph{single-camera analytics}, which uses own-stream telemet
 \emph{static redundancy}, a pre-provisioned two-witness set with majority voting inside it and no runtime hand-off.
 
 \section{Results}\label{sec:results}
-\input{generated/results_text.tex}
+\input{results.tex}
 
 \section{Limitations}
 Detections are annotated boxes rather than detector outputs, so the measured benefit concerns attestation, not
 detection. Network telemetry is modelled, not recorded, and the airport case study uses a hypothetical camera layout
 because real layouts are not public. The ADS-B window is a single overnight capture, with sparse traffic and no DCA
-movements during its curfew, so the prior's benefit is under-tested by design. Finally, WILDTRACK is a 12$\times$36\,m
+movements during its curfew, so the prior's benefit is under-tested by design. The attestor's false-alarm rate varies
+widely across seeds because the selected threshold sits at the edge of the validation grid, and it detects
+coordinated metadata fabrication poorly. Our CPU optical flow is far slower than the 15\,ms budget that the rest of the
+attestor meets. Finally, WILDTRACK is a 12$\times$36\,m
 plaza with seven cameras. The bounds in Section~\ref{sec:theory} do not depend on scale, but the learned attestor's
 numbers should be re-measured on larger deployments.
 

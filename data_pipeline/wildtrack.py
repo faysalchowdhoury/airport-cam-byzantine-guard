@@ -58,34 +58,64 @@ def download_metadata() -> dict:
     return {"members": hashes, "bytes_fetched": f.bytes_fetched, "archive_size": f.size}
 
 
-def _decode_frames(cam_idx: int, frame_ids: list[int]) -> tuple[int, np.ndarray, dict]:
+def _decode_frames(cam_idx: int, frame_ids: list[int]) -> tuple[int, dict]:
+    """Decode one camera straight into an on-disk memmap; resumable per frame.
+
+    Progress (per-frame SHA-256) is checkpointed to ``C{k}.partial.json`` so a crash
+    or restart only re-fetches frames not yet written. Peak RAM is ~one PNG.
+    """
     from PIL import Image
 
+    frames_dir = OUT / "frames"
+    final = frames_dir / f"C{cam_idx + 1}.npy"
+    tmp = frames_dir / f"C{cam_idx + 1}.partial.npy"
+    prog = frames_dir / f"C{cam_idx + 1}.partial.json"
+    shape = (len(frame_ids), IMG_H // DOWN, IMG_W // DOWN)
+    hashes: dict[str, str] = {}
+    if final.exists() and prog.exists():
+        hashes = json.loads(prog.read_text(encoding="utf-8"))
+        if len(hashes) == len(frame_ids) and np.load(final, mmap_mode="r").shape == shape:
+            return cam_idx, hashes
+    if tmp.exists() and prog.exists():
+        arr = np.lib.format.open_memmap(tmp, mode="r+")
+        hashes = json.loads(prog.read_text(encoding="utf-8"))
+    else:
+        arr = np.lib.format.open_memmap(tmp, mode="w+", dtype=np.uint8, shape=shape)
+        hashes = {}
     z, _ = open_remote_zip(URL)
-    arr = np.zeros((len(frame_ids), IMG_H // DOWN, IMG_W // DOWN), dtype=np.uint8)
-    hashes = {}
     for i, fid in enumerate(frame_ids):
         name = f"{PREFIX}Image_subsets/C{cam_idx + 1}/{fid:08d}.png"
+        if name in hashes:
+            continue
         data = z.read(name)
-        hashes[name] = sha256_bytes(data)
+        h = sha256_bytes(data)
         img = Image.open(io.BytesIO(data)).convert("L")
+        del data
         if img.size != (IMG_W, IMG_H):
             raise ValueError(f"unexpected frame size {img.size} for {name}")
         arr[i] = np.asarray(img.reduce(DOWN), dtype=np.uint8)
-    return cam_idx, arr, hashes
+        hashes[name] = h
+        if (i + 1) % 10 == 0 or i + 1 == len(frame_ids):
+            arr.flush()
+            prog.write_text(json.dumps(hashes), encoding="utf-8")
+            print(f"C{cam_idx + 1}: {len(hashes)}/{len(frame_ids)}", flush=True)
+    arr.flush()
+    del arr
+    tmp.replace(final)
+    prog.write_text(json.dumps(hashes), encoding="utf-8")
+    return cam_idx, hashes
 
 
-def download_frames(n_frames: int = 400, workers: int = 7) -> dict:
+def download_frames(n_frames: int = 400, workers: int = 2) -> dict:
     frame_ids = FRAME_IDS[:n_frames]
     (OUT / "frames").mkdir(parents=True, exist_ok=True)
     all_hashes: dict[str, str] = {}
     with cf.ThreadPoolExecutor(max_workers=workers) as ex:
         futs = [ex.submit(_decode_frames, c, frame_ids) for c in range(7)]
         for fut in cf.as_completed(futs):
-            c, arr, hashes = fut.result()
-            np.save(OUT / "frames" / f"C{c + 1}.npy", arr)
+            c, hashes = fut.result()
             all_hashes.update(hashes)
-            print(f"camera C{c + 1}: {arr.shape} frames stored", flush=True)
+            print(f"camera C{c + 1}: {len(hashes)} frames stored", flush=True)
     manifest = OUT / "frame_sha256_manifest.json"
     manifest.write_text(json.dumps(all_hashes, indent=1, sort_keys=True), encoding="utf-8")
     return {"n_frames_per_camera": len(frame_ids), "manifest": str(manifest.relative_to(DATA.parent)),

@@ -65,13 +65,14 @@ def fig1():
     ax.set_xlim(0, 100)
     ax.set_ylim(0, 54)
     ax.axis("off")
-    lanes = [("Airside / terminal camera\nvisibility graph", 37, "#f4f8fb"),
-             ("Untrusted ADS-B / Remote-ID\nweak-prior layer", 19, "#fbf7ef"),
-             ("ST-GNN epipolar attestation &\nMILP optical hand-off", 1, "#f3faf6")]
+    lanes = [("Airside /\nterminal camera\nvisibility graph", 37, "#f4f8fb"),
+             ("Untrusted\nADS-B / Remote-ID\nweak-prior layer", 19, "#fbf7ef"),
+             ("ST-GNN epipolar\nattestation &\nMILP hand-off", 1, "#f3faf6")]
     for title, y0, col in lanes:
         ax.add_patch(FancyBboxPatch((0.5, y0), 99, 16, boxstyle="round,pad=0,rounding_size=1.2",
                                     fc=col, ec="#c9c9c9", lw=0.8))
-        ax.text(2, y0 + 8, title, va="center", ha="left", fontsize=8.5, color=INK, fontweight="bold")
+        ax.text(2, y0 + 8, title, va="center", ha="left", fontsize=7.6, color=INK, fontweight="bold",
+                linespacing=1.15)
 
     def box(x, y, w, h, text, ec):
         ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0,rounding_size=0.8",
@@ -84,14 +85,14 @@ def fig1():
     # lane 1: real camera graph (top-down WILDTRACK camera centres)
     cen = np.array([c[:2] for c in sc.centers])
     cen = (cen - cen.min(0)) / np.ptp(cen, 0)
-    gx, gy = 24 + cen[:, 0] * 14, 39.5 + cen[:, 1] * 11
+    gx, gy = 24 + cen[:, 0] * 14, 41.5 + cen[:, 1] * 9
     for i in range(7):
         for j in range(i + 1, 7):
             if A[i, j] > 0:
                 ax.plot([gx[i], gx[j]], [gy[i], gy[j]], color="#9ab", lw=0.25 + 1.6 * A[i, j] / A.max(), zorder=2)
     ax.scatter(gx, gy, s=34, c=OKABE["blue"], edgecolor="white", lw=0.8, zorder=3)
     g0 = S["gate0"]["checks"]
-    ax.text(31, 37.6, f"WILDTRACK: n = 7, $\\Delta$ = {g0['G0.4_fov_overlap_graph']['max_degree']}",
+    ax.text(31, 38.0, f"WILDTRACK: n = 7, $\\Delta$ = {g0['G0.4_fov_overlap_graph']['max_degree']}",
             ha="center", fontsize=6.8, color=MUTED)
     box(43, 40, 17, 10, "RTSP streams\nframe-rate / jitter\ntelemetry", OKABE["blue"])
     box(63, 40, 16, 10, "Detections\n(foot & head\nkeypoints)", OKABE["blue"])
@@ -108,13 +109,15 @@ def fig1():
     # lane 3
     box(24, 3.5, 17, 11, "Epipolar residuals\n$p^{\\top}E\\,p'=0$\n+ homography transfer", OKABE["green"])
     box(44, 3.5, 16, 11, "ST-GNN\ncausal GRU +\nedge-conditioned MP", OKABE["green"])
-    box(63, 3.5, 16, 11, "Quorum check\n$m(n,k)$ bound\n(compression contradiction)", OKABE["green"])
+    box(63, 3.5, 16, 11, "Quorum check\n$m(n,k)$ bound\n(compression\ncontradiction)", OKABE["green"])
     box(82, 3.5, 16, 11, "MILP hand-off\n(SCSPV availability\nweights, budget $B$)", OKABE["vermilion"])
     arrow((41, 9), (44, 9))
     arrow((60, 9), (63, 9))
     arrow((79, 9), (82, 9))
-    arrow((70, 40), (32, 14.6), col=OKABE["blue"])          # detections -> epipolar
-    arrow((51, 40), (52, 14.6), col=OKABE["blue"])          # telemetry -> GNN
+    # detections -> epipolar: down through the gap between lane-2 boxes, then along the lane boundary
+    ax.plot([70, 70, 32.5], [40, 18, 18], color=OKABE["blue"], lw=1.1, zorder=4)
+    arrow((32.5, 18.05), (32.5, 14.6), col=OKABE["blue"])
+    arrow((46, 40), (46, 14.6), col=OKABE["blue"])          # telemetry -> GNN (through lane-2 gap)
     arrow((85, 21.5), (56, 14.6), col=OKABE["orange"], ls="--")   # prior -> GNN (dashed: untrusted)
     arrow((90, 21.5), (90, 14.6), col=OKABE["orange"], ls="--")   # prior -> MILP weights
     ax.annotate("", xy=(98.8, 45), xytext=(98.8, 9),
@@ -226,6 +229,7 @@ def fig3():
     ax.set_xticks(range(1, 5))
     ax.set_xticklabels(["Single\ncamera", "Majority\nvote", "Static\nredund.", "Ours"], fontsize=7)
     ax.set_yscale("symlog", linthresh=1)
+    ax.set_ylim(bottom=0)
     ax.set_ylabel("blind min / h (per episode)")
     ax.set_title("(b) Episode distribution")
 
@@ -328,7 +332,7 @@ def fig4():
         ax.plot(t, s, color=col, ls=ls, lw=1.6,
                 label=f"{lab}: {cs['policies'][p]['blind_min_mean']:.2f} blind min")
     ax.axvline(60, color=MUTED, lw=0.8, ls=":")
-    ax.text(62, ax.get_ylim()[1] * 0.85, "attack onset", fontsize=6.5, color=MUTED)
+    ax.text(63, 0.15, "attack onset", fontsize=6.5, color=MUTED)
     ax.set_xlabel("time (s)")
     ax.set_ylabel("blind weight")
     ax.set_title(f"(c) ATL Concourse F, k = {cs['k']} of {cs['n_cameras']} cameras, budget B = {cs['budget']}",
@@ -376,7 +380,7 @@ def fig5():
         ax.plot(s, np.arange(1, len(s) + 1) / len(s), color=col, ls=ls, lw=1.6,
                 label=f"{lab} (p95 {L[k]['p95']:.1f} ms)")
     ax.axvline(15, color=MUTED, lw=0.9, ls=":")
-    ax.text(15.5, 0.04, "15 ms", fontsize=6.5, color=MUTED)
+    ax.text(16.5, 0.62, "15 ms", fontsize=6.5, color=MUTED)
     ax.set_xscale("log")
     ax.set_xlabel("latency per frame (ms, CPU, 1 thread)")
     ax.set_ylabel("CDF")

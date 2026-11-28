@@ -1,0 +1,89 @@
+=== theory.quorum_bound 22:05:01
+72 (r,k,geometry) cases checked; mismatches with closed form: 0
+=== experiments.phase_boundary 22:05:02
+{
+ "witness": {
+  "ground": 0.9924921167225587,
+  "offplane": 0.8723092692927222
+ },
+ "ground_agreement": {
+  "detect": 1.0,
+  "mask": 1.0,
+  "cells": 21
+ },
+ "offplane_agreement": {
+  "detect": 0.8,
+  "mask": 0.8,
+  "cells": 15
+ }
+}
+=== experiments.run_benchmark 22:05:14
+C:\Users\sheel\Downloads\airport-cam-byzantine-guard\experiments\flow.py:25: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\torch\csrc\utils\tensor_numpy.cpp:214.)
+  t = torch.from_numpy(np.ascontiguousarray(arr)).float().unsqueeze(1) / 255.0
+[seed 42] features built in 267s
+[seed 42] trained full in 69s
+[seed 42] trained no_epipolar in 68s
+[seed 42] trained no_telemetry in 70s
+[seed 42] trained no_adsb in 63s
+[seed 42] single_camera: theta=0.9 blind/h=3.44 FA/h=242.1 auroc=0.740
+[seed 42] majority_vote: theta=0.9 blind/h=2.11 FA/h=55.9 auroc=0.646
+[seed 42] static_redundancy: theta=0.6 blind/h=3.46 FA/h=15.8 auroc=0.603
+[seed 42] scspv_attestor: theta=0.9 blind/h=1.76 FA/h=50.1 auroc=0.863
+[seed 42] done in 757s
+[seed 101] features built in 83s
+[seed 101] trained full in 65s
+[seed 101] trained no_epipolar in 67s
+[seed 101] trained no_telemetry in 68s
+[seed 101] trained no_adsb in 63s
+[seed 101] single_camera: theta=0.9 blind/h=3.57 FA/h=231.1 auroc=0.720
+[seed 101] majority_vote: theta=0.9 blind/h=2.13 FA/h=58.6 auroc=0.664
+[seed 101] static_redundancy: theta=0.6 blind/h=3.11 FA/h=13.4 auroc=0.606
+[seed 101] scspv_attestor: theta=0.9 blind/h=1.81 FA/h=16.8 auroc=0.861
+[seed 101] done in 541s
+[seed 202] features built in 65s
+[seed 202] trained full in 63s
+[seed 202] trained no_epipolar in 62s
+[seed 202] trained no_telemetry in 64s
+[seed 202] trained no_adsb in 60s
+[seed 202] single_camera: theta=0.9 blind/h=3.67 FA/h=256.8 auroc=0.735
+[seed 202] majority_vote: theta=0.9 blind/h=1.86 FA/h=55.2 auroc=0.650
+[seed 202] static_redundancy: theta=0.6 blind/h=2.98 FA/h=11.7 auroc=0.608
+[seed 202] scspv_attestor: theta=0.9 blind/h=1.78 FA/h=21.3 auroc=0.846
+[seed 202] done in 552s
+[seed 303] features built in 54s
+[seed 303] trained full in 66s
+[seed 303] trained no_epipolar in 71s
+[seed 303] trained no_telemetry in 65s
+[seed 303] trained no_adsb in 57s
+[seed 303] single_camera: theta=0.9 blind/h=3.02 FA/h=230.7 auroc=0.722
+[seed 303] majority_vote: theta=0.9 blind/h=1.68 FA/h=55.5 auroc=0.640
+[seed 303] static_redundancy: theta=0.6 blind/h=2.58 FA/h=11.7 auroc=0.590
+[seed 303] scspv_attestor: theta=0.9 blind/h=1.86 FA/h=10.6 auroc=0.835
+[seed 303] done in 556s
+[seed 404] features built in 71s
+[seed 404] trained full in 134s
+[seed 404] trained no_epipolar in 106s
+[seed 404] trained no_telemetry in 81s
+[seed 404] trained no_adsb in 68s
+[seed 404] single_camera: theta=0.9 blind/h=3.09 FA/h=232.5 auroc=0.737
+[seed 404] majority_vote: theta=0.9 blind/h=1.78 FA/h=58.3 auroc=0.639
+[seed 404] static_redundancy: theta=0.6 blind/h=3.06 FA/h=10.3 auroc=0.590
+[seed 404] scspv_attestor: theta=0.9 blind/h=1.73 FA/h=86.4 auroc=0.853
+[seed 404] done in 729s
+=== experiments.latency 22:57:41
+C:\Users\sheel\Downloads\airport-cam-byzantine-guard\experiments\flow.py:25: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\torch\csrc\utils\tensor_numpy.cpp:214.)
+  t = torch.from_numpy(np.ascontiguousarray(arr)).float().unsqueeze(1) / 255.0
+{'flow_ms_per_camera': (65.92, 213.61), 'geometry_ms': (3.75, 8.59), 'gnn_ms': (1.13, 2.68), 'milp_ms': (10.68, 50.02), 'attestor_ms': (5.15, 11.99)}
+=== experiments.summarize 22:58:09
+wrote results_summary.json; {'single_camera': 3.359, 'majority_vote': 1.911, 'static_redundancy': 3.038, 'scspv_attestor': 1.788}
+=== experiments.airport_case_study 22:58:11
+{'n_cameras': 16, 'budget': 7, 'n_cells': 321, 'max_degree': 8, 'max_tolerable_k_mask_ground': 4, 'byzantine': [4, 12, 13, 14], 'k': 4, 'initial_selection': [1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0], 'weight_shift_spoof_l1': 0.07479389115242026, 'adsb_snapshots': 90, 'adsb_cells_active': 77, 'class_counts': {'terminal': 32, 'apron': 140, 'parking_position': 0, 'taxiway': 149}, 'policies': {'none': {'blind_min_mean': 4.635553496989367, 'blind_min_std': 0.0}, 'greedy': {'blind_min_mean': 2.9631235942566136, 'blind_min_std': 0.024844161676312163}, 'milp': {'blind_min_mean': 2.9477294796974047, 'blind_min_std': 0.009189565638311617}}}
+=== experiments.summarize 23:00:33
+wrote results_summary.json; {'single_camera': 3.359, 'majority_vote': 1.911, 'static_redundancy': 3.038, 'scspv_attestor': 1.788}
+=== figures.make_figures 23:00:34
+ok fig1
+ok fig2
+ok fig3
+ok fig4
+ok fig5
+ALL DONE 23:00:41
